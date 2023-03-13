@@ -12,16 +12,36 @@ import {
   Modal,
   Chip,
   Rating,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
 } from "@mui/material";
 import ImageSlider from "../components/ImageSlider";
 import { useToasts } from "react-toast-notifications";
+import AddIcon from "@mui/icons-material/Add";
+import ClearIcon from "@mui/icons-material/Clear";
 
 const Shop = () => {
   const { addToast } = useToasts();
   const [products, setProducts] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [dialogAddOpen, setDialogAddOpen] = useState(false);
+  const [dialogConfirmOpen, setDialogConfirmOpen] = useState(false);
   const [productSelected, setProductSelected] = useState(null);
   const cart = JSON.parse(localStorage.getItem("cart")) ?? [];
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [brand, setBrand] = useState("");
+  const [price, setPrice] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [stock, setStock] = useState(0);
+  const [thumbnail, setThumbnail] = useState("");
+  const [images, setImages] = useState("");
 
   const style = {
     position: "absolute",
@@ -34,6 +54,18 @@ const Shop = () => {
     // border: "2px solid #000",
     boxShadow: 24,
     p: 4,
+  };
+
+  const init = () => {
+    setTitle("");
+    setDescription("");
+    setCategory("");
+    setBrand("");
+    setPrice(0);
+    setRating(0);
+    setStock(0);
+    setThumbnail("");
+    setImages("");
   };
 
   const onAddCart = (item) => {
@@ -72,17 +104,64 @@ const Shop = () => {
     setModalOpen(false);
   };
 
-  const getData = async () => {
-    const response = await axios.get("https://dummyjson.com/products");
+  const onHandleDialogClose = () => {
+    setDialogAddOpen(false);
+    init();
+  };
 
-    setProducts(response.data.products);
+  const onHandleDialogConfirmClose = () => {
+    setDialogConfirmOpen(false);
+  };
+
+  const getData = async () => {
+    const response = await axios.get("http://localhost:8000/products");
+
+    setProducts(response.data.data);
+  };
+
+  const onHandleSubmit = async () => {
+    const data = {
+      title,
+      description,
+      category,
+      price,
+      brand,
+      rating,
+      stock,
+      thumbnail,
+      images: images.split(","),
+    };
+
+    const response = await axios.post("http://localhost:8000/products", data);
+
+    addToast(<p>Already Added product</p>, {
+      appearance: "success",
+      autoDismiss: true,
+    });
+
+    onHandleDialogClose();
+    getData();
+  };
+
+  const onHandleDelete = async () => {
+    if (productSelected) {
+      const response = await axios.delete(
+        `http://localhost:8000/products/${productSelected?._id}`
+      );
+
+      addToast(<p>Already deleted product</p>, {
+        appearance: "success",
+        autoDismiss: true,
+      });
+
+      onHandleDialogConfirmClose();
+      getData();
+    }
   };
 
   useEffect(() => {
     getData();
   }, []);
-
-  console.log(productSelected);
 
   const displayModal = (
     <Modal open={modalOpen} onClose={onHandleClose}>
@@ -124,13 +203,152 @@ const Shop = () => {
     </Modal>
   );
 
+  const displayDialogAdd = (
+    <Dialog open={dialogAddOpen} onClose={onHandleDialogClose}>
+      <DialogTitle>Add Product</DialogTitle>
+      <DialogContent>
+        <Box sx={{ minWidth: "400px" }}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TextField
+                label="Title"
+                fullWidth
+                variant="outlined"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Brand"
+                fullWidth
+                variant="outlined"
+                value={brand}
+                onChange={(event) => setBrand(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Description"
+                fullWidth
+                variant="outlined"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Category"
+                fullWidth
+                variant="outlined"
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Price"
+                fullWidth
+                variant="outlined"
+                type="number"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Rating"
+                fullWidth
+                variant="outlined"
+                type="number"
+                value={rating}
+                onChange={(event) => setRating(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Stock"
+                fullWidth
+                type="number"
+                variant="outlined"
+                value={stock}
+                onChange={(event) => setStock(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Thumbnail"
+                fullWidth
+                variant="outlined"
+                value={thumbnail}
+                onChange={(event) => setThumbnail(event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Images"
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={3}
+                value={images}
+                onChange={(event) => setImages(event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onHandleDialogClose}>Cancel</Button>
+        <Button onClick={onHandleSubmit}>Submit</Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  const displayConfirmDialog = (
+    <Dialog open={dialogConfirmOpen} onClose={onHandleDialogConfirmClose}>
+      <DialogTitle id="alert-dialog-title">
+        Are you sure you want to delete ?
+      </DialogTitle>
+      <DialogActions>
+        <Button onClick={onHandleDialogConfirmClose}>Disagree</Button>
+        <Button onClick={onHandleDelete} autoFocus>
+          Agree
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <Box padding={1}>
+      <Box display="flex" justifyContent="end" marginY={3}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setDialogAddOpen(true)}
+        >
+          Add Product
+        </Button>
+      </Box>
       <Grid container spacing={2} margin="auto">
         {products.map((item) => {
           return (
             <Grid item>
-              <Card sx={{ maxWidth: 200 }}>
+              <Card sx={{ maxWidth: 200, position: "relative" }}>
+                <IconButton
+                  color="error"
+                  sx={{
+                    position: "absolute",
+                    top: "0px",
+                    right: "0px",
+                  }}
+                  onClick={() => {
+                    setDialogConfirmOpen(true);
+                    setProductSelected(item);
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
                 <CardMedia
                   component="img"
                   height="140"
@@ -181,6 +399,8 @@ const Shop = () => {
         })}
       </Grid>
       {displayModal}
+      {displayDialogAdd}
+      {displayConfirmDialog}
     </Box>
   );
 };
