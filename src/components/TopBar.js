@@ -25,6 +25,11 @@ function TopBar(props) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const cart = JSON.parse(localStorage.getItem("cart")) ?? [];
+  const profileString = localStorage.getItem("profile");
+  const profile = JSON.parse(profileString);
+
+  console.log({ profileString, profile });
+
   const [cartList, setCartList] = React.useState(cart);
 
   const navItems = [
@@ -138,6 +143,32 @@ function TopBar(props) {
               );
             })}
           </Box>
+
+          {profile ? (
+            <>
+              <h4 style={{ color: "yellow" }}>
+                Welcome, {profile?.account?.first_name}
+              </h4>
+              <Button
+                color="secondary"
+                onClick={() => {
+                  localStorage.removeItem("profile");
+                  navigate("/login");
+                }}
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button
+              color="secondary"
+              onClick={() => {
+                navigate("/login");
+              }}
+            >
+              Login
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
       <Box component="nav">

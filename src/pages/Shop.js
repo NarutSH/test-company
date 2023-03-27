@@ -43,6 +43,9 @@ const Shop = () => {
   const [thumbnail, setThumbnail] = useState("");
   const [images, setImages] = useState("");
 
+  const profileString = localStorage.getItem("profile");
+  const profile = JSON.parse(profileString);
+
   const style = {
     position: "absolute",
     top: "50%",
@@ -321,15 +324,17 @@ const Shop = () => {
 
   return (
     <Box padding={1}>
-      <Box display="flex" justifyContent="end" marginY={3}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogAddOpen(true)}
-        >
-          Add Product
-        </Button>
-      </Box>
+      {profile && (
+        <Box display="flex" justifyContent="end" marginY={3}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setDialogAddOpen(true)}
+          >
+            Add Product
+          </Button>
+        </Box>
+      )}
       <Grid container spacing={2} margin="auto">
         {products.map((item) => {
           return (
